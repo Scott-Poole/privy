@@ -150,19 +150,21 @@
           "enum": [
             "Ollama",
             "llamafile",
-            "llama.cpp"
+            "llama.cpp",
+            "llama-cpp-python"
           ],
           "enumDescriptions": [
             "One of the fastest ways to get started with local models on Mac/Linux",
             "If you are running LLM with this self-contained binary",
-            "If you are running llama.cpp server from source"
+            "If you are running llama.cpp server from source",
+            "If you are running a llama-cpp-python web server"
           ],
           "order": 2
         },
         "privy.providerBaseUrl": {
           "type": "string",
           "default": "http://localhost:11434/",
-          "markdownDescription": "Specify the URL to the provider.",
+          "markdownDescription": "Specify the URL to the provider.\n\n*For llama-cpp-python: Don't forget to include /v1. ie http://localhost:8000/v1*",
           "scope": "application",
           "order": 3
         },

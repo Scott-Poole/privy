@@ -7,6 +7,8 @@ import {
   LlamaCppApiConfiguration,
   ollama,
   openai,
+  openaicompatible,
+  BaseUrlApiConfiguration,
   streamText,
   generateText,
 } from "modelfusion";
@@ -46,7 +48,7 @@ function getAutoCompleteModel(): string {
 
 function getProvider() {
   return z
-    .enum(["llamafile", "llama.cpp", "Ollama", "OpenAI"])
+    .enum(["llamafile", "llama.cpp", "llama-cpp-python", "Ollama", "OpenAI"])
     .parse(vscode.workspace.getConfiguration("privy").get("provider"));
 }
 
@@ -85,6 +87,10 @@ export class AIClient {
   }
 
   private async getProviderApiConfiguration() {
+    if (getProvider() == "llama-cpp-python") {
+      return new BaseUrlApiConfiguration({ baseUrl: getProviderBaseUrl() });
+    }
+
     if (getProvider().startsWith("llama")) {
       return new LlamaCppApiConfiguration({ baseUrl: getProviderBaseUrl() });
     }
@@ -102,7 +108,17 @@ export class AIClient {
     temperature?: number | undefined;
   }): Promise<TextStreamingModel<InstructionPrompt>> {
     const provider = getProvider();
-
+    if (provider == "llama-cpp-python") {
+      return openaicompatible
+        .CompletionTextGenerator({
+          api: await this.getProviderApiConfiguration(),
+          model: this.getModel(),
+          maxGenerationTokens: maxTokens,
+          stopSequences: stop,
+          temperature,
+        })
+        .withInstructionPrompt();
+    }
     if (provider.startsWith("llama")) {
       return llamacpp
         .CompletionTextGenerator({
@@ -137,7 +153,17 @@ export class AIClient {
     stop?: string[] | undefined;
     temperature?: number | undefined;
   }) {
-    if (getProvider().startsWith("llama")) {
+    const provider = getProvider();
+    if (provider == "llama-cpp-python") {
+      return openaicompatible.CompletionTextGenerator({
+        api: await this.getProviderApiConfiguration(),
+        model: this.getModel("autocomplete"),
+        maxGenerationTokens: maxTokens,
+        stopSequences: stop,
+        temperature,
+      });
+    }
+    if (provider.startsWith("llama")) {
       return llamacpp
         .CompletionTextGenerator({
           api: await this.getProviderApiConfiguration(),
